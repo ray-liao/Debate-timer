@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>辯論計時器</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 2em;
+    }
+    .timer {
+      font-size: 3em;
+      margin: 0.5em;
+    }
+    .buttons button {
+      font-size: 1.2em;
+      margin: 0.5em;
+      padding: 0.5em 1em;
+    }
+    .team {
+      margin: 2em 0;
+    }
+    input {
+      width: 60px;
+    }
+  </style>
+</head>
+<body>
+  <h1>辯論計時器</h1>
+
+  <div>
+    <label>正方 (分:秒): 
+      <input id="team1Min" type="number" min="0" value="5"> :
+      <input id="team1Sec" type="number" min="0" max="59" value="0">
+    </label>
+    <label>反方 (分:秒): 
+      <input id="team2Min" type="number" min="0" value="4"> :
+      <input id="team2Sec" type="number" min="0" max="59" value="0">
+    </label>
+    <button onclick="startTimerSetup()">設定計時器</button>
+    <button onclick="resetTimers()">重置</button>
+    <button onclick="pauseTimer()">暫停</button>
+  </div>
+
+  <div class="team">
+    <h2>正方</h2>
+    <div class="timer" id="team1Timer">05:00</div>
+    <button onclick="switchTeam('team1')">切換到正方</button>
+  </div>
+
+  <div class="team">
+    <h2>反方</h2>
+    <div class="timer" id="team2Timer">04:00</div>
+    <button onclick="switchTeam('team2')">切換到反方</button>
+  </div>
+
+  <audio id="ding30">
+    <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
+  </audio>
+  <audio id="ding0">
+    <source src="https://www.soundjay.com/button/beep-09.wav" type="audio/wav">
+  </audio>
+
+  <script>
+    let timers = {
+      team1: 300,
+      team2: 240
+    };
+    let currentTeam = null;
+    let interval = null;
+    let thirtySecondAlertPlayed = {
+      team1: false,
+      team2: false
+    };
+
+    function startTimerSetup() {
+      timers.team1 = parseInt(document.getElementById('team1Min').value) * 60 + parseInt(document.getElementById('team1Sec').value);
+      timers.team2 = parseInt(document.getElementById('team2Min').value) * 60 + parseInt(document.getElementById('team2Sec').value);
+      thirtySecondAlertPlayed.team1 = false;
+      thirtySecondAlertPlayed.team2 = false;
+      updateDisplay('team1');
+      updateDisplay('team2');
+      stopInterval();
+      currentTeam = null;
+    }
+
+    function updateDisplay(team) {
+      const seconds = timers[team];
+      const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const sec = (seconds % 60).toString().padStart(2, '0');
+      document.getElementById(`${team}Timer`).textContent = `${min}:${sec}`;
+    }
+
+    function stopInterval() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    }
+
+    function pauseTimer() {
+      stopInterval();
+    }
+
+    function resetTimers() {
+      stopInterval();
+      startTimerSetup();
+    }
+
+    function switchTeam(team) {
+      stopInterval();
+      currentTeam = team;
+      interval = setInterval(() => {
+        if (timers[team] > 0) {
+          timers[team]--;
+          updateDisplay(team);
+
+          if (timers[team] === 30 && !thirtySecondAlertPlayed[team]) {
+            document.getElementById('ding30').play();
+            thirtySecondAlertPlayed[team] = true;
+          }
+
+          if (timers[team] === 0) {
+            stopInterval();
+            document.getElementById('ding0').play();
+            alert(team + " 時間結束！");
+          }
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
